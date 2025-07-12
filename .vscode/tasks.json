@@ -1,0 +1,36 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Install Dependencies",
+            "type": "shell",
+            "command": "pip",
+            "args": ["install", "-r", "requirements.txt"],
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "Start Whisper Server",
+            "type": "shell",
+            "command": "python",
+            "args": ["app.py"],
+            "group": "build",
+            "isBackground": true,
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Check FFmpeg",
+            "type": "shell",
+            "command": "ffmpeg",
+            "args": ["-version"],
+            "group": "test",
+            "problemMatcher": []
+        }
+    ]
+}

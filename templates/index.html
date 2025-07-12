@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whisper AI Transcription Service</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .tab {
+            padding: 15px 30px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1em;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            color: #3498db;
+            border-bottom-color: #3498db;
+        }
+
+        .tab:hover {
+            color: #3498db;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .upload-area {
+            border: 3px dashed #3498db;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9fa;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            background: #e9ecef;
+            border-color: #2980b9;
+        }
+
+        .upload-area.dragover {
+            background: #e3f2fd;
+            border-color: #1976d2;
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            color: #3498db;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        input[type="text"],
+        input[type="file"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .result {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid #27ae60;
+        }
+
+        .transcript {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            white-space: pre-wrap;
+            line-height: 1.8;
+        }
+
+        .error {
+            background: #e74c3c;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: none;
+        }
+
+        .success {
+            background: #27ae60;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .model-info {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3498db;
+        }
+
+        .download-link {
+            display: inline-block;
+            margin-top: 10px;
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .download-link:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .main-content {
+                padding: 20px;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .tab {
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Whisper AI Transcription</h1>
+            <p>Convert YouTube videos and audio files to text using OpenAI's Whisper AI</p>
+        </div>
+
+        <div class="main-content">
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('youtube')">YouTube</button>
+                <button class="tab" onclick="showTab('file')">File Upload</button>
+            </div>
+
+            <!-- YouTube Tab -->
+            <div id="youtube-tab" class="tab-content active">
+                <div class="model-info">
+                    <strong>Tip:</strong> Paste any YouTube video URL below. The audio will be extracted and
+                    transcribed automatically.
+                </div>
+
+                <form id="youtube-form">
+                    <div class="form-group">
+                        <label for="youtube-url">YouTube URL:</label>
+                        <input type="text" id="youtube-url" placeholder="https://www.youtube.com/watch?v=..." required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="youtube-model">Whisper Model:</label>
+                        <select id="youtube-model">
+                            <option value="tiny">Tiny (fastest, lower accuracy)</option>
+                            <option value="base" selected>Base (balanced)</option>
+                            <option value="small">Small (good accuracy)</option>
+                            <option value="medium">Medium (better accuracy)</option>
+                            <option value="large">Large (best accuracy, slower)</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn">Transcribe YouTube Video</button>
+                </form>
+            </div>
+
+            <!-- File Upload Tab -->
+            <div id="file-tab" class="tab-content">
+                <div class="model-info">
+                    <strong>Supported formats:</strong> MP3, MP4, WAV, FLAC, M4A, OGG, WMA, AAC
+                </div>
+
+                <form id="file-form">
+                    <div class="upload-area" id="upload-area">
+                        <div class="upload-icon">📁</div>
+                        <h3>Drop your audio file here or click to browse</h3>
+                        <p>Maximum file size: 500MB</p>
+                        <input type="file" id="audio-file" accept=".mp3,.mp4,.wav,.flac,.m4a,.ogg,.wma,.aac"
+                            style="display: none;">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="file-model">Whisper Model:</label>
+                        <select id="file-model">
+                            <option value="tiny">Tiny (fastest, lower accuracy)</option>
+                            <option value="base" selected>Base (balanced)</option>
+                            <option value="small">Small (good accuracy)</option>
+                            <option value="medium">Medium (better accuracy)</option>
+                            <option value="large">Large (best accuracy, slower)</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn" disabled>Transcribe Audio File</button>
+                </form>
+            </div>
+
+            <!-- Loading indicator -->
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Processing your audio... This may take a few minutes depending on the file size and selected model.
+                </p>
+            </div>
+
+            <!-- Error message -->
+            <div id="error" class="error"></div>
+
+            <!-- Results -->
+            <div id="result" class="result">
+                <h3>Transcription Result</h3>
+                <div id="transcript-info"></div>
+                <div id="transcript-text" class="transcript"></div>
+                <a id="download-link" class="download-link" style="display: none;">Download Transcript</a>
+                <a id="download-link-json" class="download-link" style="display: none;">Download as JSON</a>
+                <a id="download-link-txt" class="download-link" style="display: none;">Download as TXT</a>
+                <a id="download-link-docx" class="download-link" style="display: none;">Download as DOCX</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab content
+            document.getElementById(tabName + '-tab').classList.add('active');
+
+            // Add active class to selected tab
+            event.target.classList.add('active');
+
+            // Reset forms and results
+            resetUI();
+        }
+
+        // File upload handling
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('audio-file');
+        const fileSubmitBtn = document.querySelector('#file-form .btn');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                updateUploadArea();
+            }
+        });
+
+        fileInput.addEventListener('change', updateUploadArea);
+
+        function updateUploadArea() {
+            const file = fileInput.files[0];
+            if (file) {
+                uploadArea.innerHTML = `
+                    <div class="upload-icon">✅</div>
+                    <h3>File Selected: ${file.name}</h3>
+                    <p>Size: ${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                `;
+                fileSubmitBtn.disabled = false;
+            } else {
+                uploadArea.innerHTML = `
+                    <div class="upload-icon">📁</div>
+                    <h3>Drop your audio file here or click to browse</h3>
+                    <p>Maximum file size: 500MB</p>
+                `;
+                fileSubmitBtn.disabled = true;
+            }
+        }
+
+        // Form submissions
+        document.getElementById('youtube-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const url = document.getElementById('youtube-url').value;
+            const model = document.getElementById('youtube-model').value;
+
+            await transcribeYouTube(url, model);
+        });
+
+        document.getElementById('file-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const file = fileInput.files[0];
+            const model = document.getElementById('file-model').value;
+
+            if (file) {
+                await transcribeFile(file, model);
+            }
+        });
+
+        // API calls
+        async function transcribeYouTube(url, model) {
+            showLoading();
+
+            try {
+                const response = await fetch('/transcribe_youtube', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url, model_size: model })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showResult(data.transcript, {
+                        title: data.title,
+                        language: data.language,
+                        source: 'YouTube',
+                        transcriptFile: data.transcript_file
+                    });
+                } else {
+                    showError(data.error || 'An error occurred during transcription');
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+            }
+        }
+
+        async function transcribeFile(file, model) {
+            showLoading();
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('model_size', model);
+
+            try {
+                const response = await fetch('/transcribe_file', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showResult(data.transcript, {
+                        filename: data.filename,
+                        language: data.language,
+                        source: 'File',
+                        transcriptFile: data.transcript_file
+                    });
+                } else {
+                    showError(data.error || 'An error occurred during transcription');
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+            }
+        }
+
+        // UI helpers
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('result').style.display = 'none';
+
+            // Disable submit buttons
+            document.querySelectorAll('.btn').forEach(btn => btn.disabled = true);
+        }
+
+        function showResult(transcript, info) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('result').style.display = 'block';
+
+            // Show transcript info
+            const infoHtml = `
+                <div class="success">
+                    <strong>✅ Transcription completed!</strong><br>
+                    Source: ${info.source}<br>
+                    ${info.title ? `Title: ${info.title}<br>` : ''}
+                    ${info.filename ? `File: ${info.filename}<br>` : ''}
+                    Language detected: ${info.language.toUpperCase()}
+                </div>
+            `;
+            document.getElementById('transcript-info').innerHTML = infoHtml;
+
+            // Show transcript text
+            document.getElementById('transcript-text').textContent = transcript;
+
+            // Show download links
+            if (info.transcriptFile) {
+                document.getElementById('download-link-json').href = `/download_transcript/${info.transcriptFile}`;
+                document.getElementById('download-link-json').style.display = 'inline-block';
+                document.getElementById('download-link-txt').href = `/download_transcript/${info.transcriptFile}?format=txt`;
+                document.getElementById('download-link-txt').style.display = 'inline-block';
+                document.getElementById('download-link-docx').href = `/download_transcript/${info.transcriptFile}?format=docx`;
+                document.getElementById('download-link-docx').style.display = 'inline-block';
+            }
+
+            // Re-enable submit buttons
+            document.querySelectorAll('.btn').forEach(btn => btn.disabled = false);
+        }
+
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('error').textContent = '❌ ' + message;
+
+            // Re-enable submit buttons
+            document.querySelectorAll('.btn').forEach(btn => btn.disabled = false);
+        }
+
+        function resetUI() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('result').style.display = 'none';
+
+            // Reset file upload area
+            fileInput.value = '';
+            updateUploadArea();
+        }
+
+        // Initialize
+        updateUploadArea();
+    </script>
+</body>
+
+</html>
