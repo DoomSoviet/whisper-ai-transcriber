@@ -15,6 +15,7 @@ import logging
 from datetime import datetime
 import json
 from docx import Document
+import threading
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -34,6 +35,10 @@ ALLOWED_EXTENSIONS = {'mp3', 'mp4', 'wav', 'flac', 'm4a', 'ogg', 'wma', 'aac'}
 
 # Global variable to store the Whisper model
 whisper_model = None
+
+# Global variable to track the current transcription thread
+current_transcription_thread = None
+cancel_event = threading.Event()
 
 def load_whisper_model(model_size="base"):
     """Load the Whisper model."""
@@ -114,13 +119,17 @@ def download_youtube_audio(url, output_path):
         raise
 
 def transcribe_audio(audio_path, model_size="base"):
-    """Transcribe audio file using Whisper."""
+    """Transcribe audio file using Whisper, with cancellation support."""
     try:
         model = load_whisper_model(model_size)
         logger.info(f"Starting transcription of: {audio_path}")
-        
+        # Check for cancellation before starting
+        if cancel_event.is_set():
+            raise Exception("Transcription cancelled by user.")
         result = model.transcribe(audio_path)
-        
+        # Check for cancellation after transcription (if possible)
+        if cancel_event.is_set():
+            raise Exception("Transcription cancelled by user.")
         return {
             'text': result['text'],
             'segments': result['segments'],
@@ -129,6 +138,8 @@ def transcribe_audio(audio_path, model_size="base"):
     except Exception as e:
         logger.error(f"Error during transcription: {e}")
         raise
+    finally:
+        cancel_event.clear()
 
 def save_transcript(transcript_data, filename_base):
     """Save transcript to file."""
@@ -285,6 +296,13 @@ def health_check():
         return jsonify({'status': 'healthy', 'whisper_loaded': True})
     except Exception as e:
         return jsonify({'status': 'unhealthy', 'error': str(e)}), 500
+
+@app.route('/cancel_transcription', methods=['POST'])
+def cancel_transcription():
+    """Cancel the current transcription process safely."""
+    global cancel_event
+    cancel_event.set()
+    return jsonify({'success': True, 'message': 'Transcription cancelled.'})
 
 if __name__ == '__main__':
     print("Starting Whisper Transcription Service...")

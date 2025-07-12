@@ -365,6 +365,8 @@
                 <a id="download-link-json" class="download-link" style="display: none;">Download as JSON</a>
                 <a id="download-link-txt" class="download-link" style="display: none;">Download as TXT</a>
                 <a id="download-link-docx" class="download-link" style="display: none;">Download as DOCX</a>
+                <button id="cancel-btn" class="btn"
+                    style="display:none;background:#e74c3c;color:#fff;margin-top:20px;">Cancel Transcription</button>
             </div>
         </div>
     </div>
@@ -523,15 +525,30 @@
             document.getElementById('loading').style.display = 'block';
             document.getElementById('error').style.display = 'none';
             document.getElementById('result').style.display = 'none';
-
+            // Show cancel button
+            document.getElementById('cancel-btn').style.display = 'inline-block';
             // Disable submit buttons
             document.querySelectorAll('.btn').forEach(btn => btn.disabled = true);
         }
+
+        document.getElementById('cancel-btn').addEventListener('click', async function () {
+            // Hide cancel button immediately
+            document.getElementById('cancel-btn').style.display = 'none';
+            // Send cancel request to backend
+            try {
+                await fetch('/cancel_transcription', { method: 'POST' });
+                showError('Transcription cancelled by user.');
+            } catch (err) {
+                showError('Failed to cancel transcription.');
+            }
+        });
 
         function showResult(transcript, info) {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('error').style.display = 'none';
             document.getElementById('result').style.display = 'block';
+            // Hide cancel button
+            document.getElementById('cancel-btn').style.display = 'none';
 
             // Show transcript info
             const infoHtml = `
